@@ -1,6 +1,7 @@
 import requests
 import json
 import pandas as pd
+import csv
 
 response_API = requests.get('https://remoteok.com/api')
 data = response_API.json()
@@ -11,22 +12,21 @@ jobs = data[1:6]
 raw_json_strings = [json.dumps(job, indent=2) for job in jobs]
 
 
-with pd.ExcelWriter("remote_jobs_dual.xlsx") as writer:
-    # Raw data
-    pd.DataFrame(raw_json_strings, columns=["Raw JSON"]).to_excel(writer, sheet_name="Raw", index=False)
+pd.DataFrame(raw_json_strings, columns=["Raw JSON"]).to_csv("remote_jobs_raw.csv", index=False)
 
-    # Parsed data
-    parsed = pd.DataFrame([
-        {
-            "Position": job.get("position", "N/A"),
-            "Company": job.get("company", "N/A"),
-            "Location": job.get("location", "N/A"),
-            "Tags": ", ".join(job.get("tags", [])),
-            "URL": job.get("url", "N/A")
-        }
-        for job in data[1:]
-    ])
-    parsed.to_excel(writer, sheet_name="Parsed", index=False)
+# Save parsed data for all jobs to CSV
+parsed = pd.DataFrame([
+    {
+        "Position": job.get("position", "N/A"),
+        "Company": job.get("company", "N/A"),
+        "Location": job.get("location", "N/A"),
+        "Tags": ", ".join(job.get("tags", [])),
+        "URL": job.get("url", "N/A")
+    }
+    for job in data[1:]
+])
+parsed.to_csv("remote_jobs_parsed.csv", index=False)
+
 
 
 for job in jobs:
@@ -36,4 +36,4 @@ for job in jobs:
 
     print(f"{slug} at {company} — {url}")
 
-keyword = input("Enter a keyword to find a job listing ")
+#keyword = input("Enter a keyword to find a job listing ")
