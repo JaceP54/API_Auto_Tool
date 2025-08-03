@@ -8,14 +8,25 @@ data = response_API.json()
 # Get the first 5 actual job listings (skipping metadata at index 0)
 jobs = data[1:6]
 
-raw_json_strings = [json.dumps(job, indent=2) for job in data[1:6]]  # skipping metadata
+raw_json_strings = [json.dumps(job, indent=2) for job in jobs]
 
-# Create a DataFrame with one column
-df = pd.DataFrame(raw_json_strings, columns=["Raw API Data"])
 
-# Save to Excel
-file_name = "remote_job_raw.xlsx"
-df.to_excel(file_name, index=False)
+with pd.ExcelWriter("remote_jobs_dual.xlsx") as writer:
+    # Raw data
+    pd.DataFrame(raw_json_strings, columns=["Raw JSON"]).to_excel(writer, sheet_name="Raw", index=False)
+
+    # Parsed data
+    parsed = pd.DataFrame([
+        {
+            "Position": job.get("position", "N/A"),
+            "Company": job.get("company", "N/A"),
+            "Location": job.get("location", "N/A"),
+            "Tags": ", ".join(job.get("tags", [])),
+            "URL": job.get("url", "N/A")
+        }
+        for job in data[1:]
+    ])
+    parsed.to_excel(writer, sheet_name="Parsed", index=False)
 
 
 for job in jobs:
